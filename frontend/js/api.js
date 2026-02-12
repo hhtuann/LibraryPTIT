@@ -3,11 +3,123 @@ const API_URL = '/api';
 
 // Helper function để xử lý response
 async function handleResponse(response) {
-    const data = await response.json();
-    if (!response.ok) {
-        throw new Error(data.detail || 'Có lỗi xảy ra');
+    // Lấy text response trước
+    const text = await response.text();
+
+    // Thử parse JSON
+    let data;
+    try {
+        data = text ? JSON.parse(text) : {};
+    } catch (e) {
+        // Nếu không phải JSON, xử lý như text error
+        if (!response.ok) {
+            throw new Error(getErrorMessage(response.status, text));
+        }
+        throw new Error('Phản hồi từ server không hợp lệ');
     }
+
+    // Kiểm tra response status
+    if (!response.ok) {
+        // Xử lý các loại error detail khác nhau từ FastAPI
+        let errorMessage = 'Có lỗi xảy ra';
+
+        if (data.detail) {
+            if (typeof data.detail === 'string') {
+                errorMessage = data.detail;
+            } else if (Array.isArray(data.detail)) {
+                // Validation errors từ Pydantic
+                errorMessage = data.detail.map(err => {
+                    const field = err.loc ? err.loc[err.loc.length - 1] : 'Trường';
+                    const msg = translateValidationError(err.msg, field);
+                    return msg;
+                }).join('. ');
+            } else if (data.detail.msg) {
+                errorMessage = data.detail.msg;
+            }
+        } else if (data.message) {
+            errorMessage = data.message;
+        }
+
+        throw new Error(errorMessage);
+    }
+
     return data;
+}
+
+// Dịch lỗi validation sang tiếng Việt
+function translateValidationError(msg, field) {
+    const fieldNames = {
+        'title': 'Tên sách',
+        'author': 'Tác giả',
+        'isbn': 'ISBN',
+        'category': 'Danh mục',
+        'quantity': 'Số lượng',
+        'description': 'Mô tả',
+        'cover_image': 'Ảnh bìa',
+        'username': 'Tên đăng nhập',
+        'password': 'Mật khẩu',
+        'email': 'Email',
+        'full_name': 'Họ tên',
+        'phone': 'Số điện thoại',
+        'note': 'Ghi chú',
+        'due_date': 'Ngày trả'
+    };
+
+    const fieldName = fieldNames[field] || field;
+
+    // Dịch các lỗi phổ biến
+    if (msg.includes('String should have at most')) {
+        const match = msg.match(/at most (\d+)/);
+        const maxLen = match ? match[1] : '?';
+        return `${fieldName} không được quá ${maxLen} ký tự`;
+    }
+    if (msg.includes('String should have at least')) {
+        const match = msg.match(/at least (\d+)/);
+        const minLen = match ? match[1] : '?';
+        return `${fieldName} phải có ít nhất ${minLen} ký tự`;
+    }
+    if (msg.includes('field required') || msg.includes('Field required')) {
+        return `${fieldName} là bắt buộc`;
+    }
+    if (msg.includes('value is not a valid email')) {
+        return `${fieldName} không đúng định dạng email`;
+    }
+    if (msg.includes('value is not a valid integer')) {
+        return `${fieldName} phải là số nguyên`;
+    }
+    if (msg.includes('ensure this value is greater than')) {
+        return `${fieldName} phải lớn hơn 0`;
+    }
+    if (msg.includes('ensure this value is less than')) {
+        return `${fieldName} quá lớn`;
+    }
+    if (msg.includes('Invalid URL')) {
+        return `${fieldName} không đúng định dạng URL`;
+    }
+
+    return `${fieldName}: ${msg}`;
+}
+
+// Lấy thông báo lỗi theo status code
+function getErrorMessage(status, text) {
+    switch (status) {
+        case 400:
+            return 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
+        case 401:
+            return 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+        case 403:
+            return 'Bạn không có quyền thực hiện thao tác này.';
+        case 404:
+            return 'Không tìm thấy dữ liệu yêu cầu.';
+        case 409:
+            return 'Dữ liệu bị trùng lặp.';
+        case 422:
+            return 'Dữ liệu không đúng định dạng. Vui lòng kiểm tra lại.';
+        case 500:
+            return 'Lỗi máy chủ. Vui lòng thử lại sau.';
+        default:
+            return `Lỗi ${status}: ${text || 'Có lỗi xảy ra'}`;
+    }
 }
 
 // Helper function để tạo headers với token
@@ -221,9 +333,10 @@ const wishlistAPI = {
 
 // ===== BORROWS API =====
 const borrowsAPI = {
-    async getBorrows(page = 1, pageSize = 10, status = '') {
+    async getBorrows(page = 1, pageSize = 10, status = '', search = '') {
         let url = `${API_URL}/borrows?page=${page}&page_size=${pageSize}`;
         if (status) url += `&status_filter=${encodeURIComponent(status)}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
 
         const response = await fetch(url, {
             headers: getHeaders()

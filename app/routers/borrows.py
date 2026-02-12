@@ -22,6 +22,7 @@ async def get_borrow_requests(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     status_filter: Optional[str] = None,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -34,6 +35,16 @@ async def get_borrow_requests(
     # Nếu không phải admin, chỉ lấy phiếu của mình
     if current_user.role.value != "admin":
         query = query.filter(BorrowRequest.user_id == current_user.id)
+    else:
+        # Admin có thể tìm kiếm theo thông tin độc giả
+        if search:
+            query = query.join(User).filter(
+                or_(
+                    User.username.ilike(f"%{search}%"),
+                    User.email.ilike(f"%{search}%"),
+                    User.full_name.ilike(f"%{search}%")
+                )
+            )
 
     # Lọc theo status
     if status_filter:

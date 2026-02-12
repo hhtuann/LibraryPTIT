@@ -11,15 +11,28 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>📚 Thư viện PTIT</h2>
+                <h2>Thư viện PTIT</h2>
             </div>
             <ul class="sidebar-nav">
-                <li><a href="dashboard.html"><span>📊</span> <span>Dashboard</span></a></li>
-                <li><a href="books.html"><span>📖</span> <span>Quản lý sách</span></a></li>
-                <li><a href="users.html"><span>👥</span> <span>Quản lý độc giả</span></a></li>
-                <li><a href="borrows.html" class="active"><span>📋</span> <span>Quản lý mượn trả</span></a></li>
-                <li><a href="#" onclick="logout()"><span>🚪</span> <span>Đăng xuất</span></a></li>
+                <li><a href="dashboard.html"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span> <span>Dashboard</span></a></li>
+                <li><a href="books.html"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span> <span>Quản lý sách</span></a></li>
+                <li><a href="users.html"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span> <span>Quản lý độc giả</span></a></li>
+                <li><a href="borrows.html" class="active"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span> <span>Quản lý mượn trả</span></a></li>
             </ul>
+            <div class="sidebar-footer">
+                <div class="user-account-box">
+                    <div class="user-avatar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="sidebar-user-name">Đang tải...</div>
+                        <div class="user-role">Quản trị viên</div>
+                    </div>
+                    <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -29,8 +42,12 @@
                 <p>Duyệt và quản lý phiếu mượn sách</p>
             </div>
 
-            <!-- Filter -->
+            <!-- Search & Filter -->
             <div class="search-box">
+                <div class="search-input">
+                    <span class="search-icon" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm theo tên, username, email độc giả...">
+                </div>
                 <select class="filter-select" id="status-filter">
                     <option value="">Tất cả trạng thái</option>
                     <option value="pending">Chờ duyệt</option>
@@ -48,13 +65,13 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Độc giả</th>
-                                    <th>Số sách</th>
-                                    <th>Ngày tạo</th>
-                                    <th>Hạn trả</th>
-                                    <th>Trạng thái</th>
-                                    <th>Thao tác</th>
+                                    <th class="col-id">ID</th>
+                                    <th class="col-name">Độc giả</th>
+                                    <th class="col-number">Số sách</th>
+                                    <th class="col-date">Ngày tạo</th>
+                                    <th class="col-date">Hạn trả</th>
+                                    <th class="col-status">Trạng thái</th>
+                                    <th class="col-actions">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody id="borrows-table-body">
@@ -72,12 +89,13 @@
 
     <!-- View Borrow Modal -->
     <div class="modal-overlay" id="view-modal">
-        <div class="modal" style="max-width: 700px;">
-            <div class="modal-header">
+        <div class="modal modal-scrollable" style="max-width: 700px;">
+            <div class="modal-header modal-header-fixed">
                 <h3>Chi tiết phiếu mượn #<span id="borrow-id"></span></h3>
                 <button class="modal-close" onclick="closeModal('view-modal')">&times;</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body-scroll">
+                <h4 class="form-section-title">Thông tin phiếu mượn</h4>
                 <div class="mb-2">
                     <strong>Độc giả:</strong> <span id="borrow-user"></span>
                 </div>
@@ -97,7 +115,7 @@
                     <strong>Ghi chú của admin:</strong> <span id="borrow-admin-note"></span>
                 </div>
 
-                <h4 class="mt-2 mb-1">Danh sách sách:</h4>
+                <h4 class="form-section-title">Danh sách sách</h4>
                 <table class="table">
                     <thead>
                         <tr>
@@ -110,51 +128,54 @@
                     <tbody id="borrow-items-body"></tbody>
                 </table>
             </div>
-            <div class="modal-footer" id="borrow-actions"></div>
+            <div class="modal-footer modal-footer-fixed" id="borrow-actions"></div>
         </div>
     </div>
 
     <!-- Approve Modal -->
     <div class="modal-overlay" id="approve-modal">
-        <div class="modal">
-            <div class="modal-header">
+        <div class="modal modal-scrollable">
+            <div class="modal-header modal-header-fixed">
                 <h3>Duyệt phiếu mượn</h3>
                 <button class="modal-close" onclick="closeModal('approve-modal')">&times;</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body-scroll">
                 <form id="approve-form">
                     <input type="hidden" id="approve-borrow-id">
+                    <h4 class="form-section-title">Thông tin hạn trả</h4>
                     <div class="alert alert-info">
                         <strong>Ngày trả sách:</strong> <span id="approve-due-date-display"></span>
                         <br><small>(Do độc giả đã chọn khi tạo phiếu)</small>
                     </div>
+                    <h4 class="form-section-title">Ghi chú</h4>
                     <div class="form-group">
-                        <label class="form-label">Ghi chú (tùy chọn)</label>
+                        <label class="form-label">Ghi chú cho độc giả (tùy chọn)</label>
                         <textarea class="form-control" id="approve-note" rows="3" placeholder="Nhập ghi chú cho độc giả..."></textarea>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('approve-modal')">Hủy</button>
-                <button class="btn btn-success" onclick="approveBorrow()">Duyệt</button>
+            <div class="modal-footer modal-footer-fixed">
+                <button class="btn btn-success" onclick="approveBorrow()">Duyệt phiếu mượn</button>
             </div>
         </div>
     </div>
 
     <!-- Reject Modal -->
     <div class="modal-overlay" id="reject-modal">
-        <div class="modal">
-            <div class="modal-header">
+        <div class="modal modal-scrollable">
+            <div class="modal-header modal-header-fixed">
                 <h3>Từ chối / Yêu cầu chỉnh sửa</h3>
                 <button class="modal-close" onclick="closeModal('reject-modal')">&times;</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body-scroll">
                 <form id="reject-form">
                     <input type="hidden" id="reject-borrow-id">
+                    <h4 class="form-section-title">Lý do</h4>
                     <div class="form-group">
-                        <label class="form-label">Lý do *</label>
+                        <label class="form-label">Lý do từ chối / yêu cầu chỉnh sửa *</label>
                         <textarea class="form-control" id="reject-note" rows="3" required placeholder="Nhập lý do từ chối hoặc yêu cầu chỉnh sửa..."></textarea>
                     </div>
+                    <h4 class="form-section-title">Tùy chọn</h4>
                     <div class="form-group">
                         <label class="form-label">
                             <input type="checkbox" id="reject-require-edit"> Yêu cầu độc giả chỉnh sửa (thay vì từ chối hoàn toàn)
@@ -162,8 +183,7 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('reject-modal')">Hủy</button>
+            <div class="modal-footer modal-footer-fixed">
                 <button class="btn btn-danger" onclick="rejectBorrow()">Xác nhận</button>
             </div>
         </div>
@@ -181,6 +201,7 @@
         let currentPage = 1;
         const pageSize = 10;
         let statusFilter = '';
+        let searchQuery = '';
         let currentBorrow = null;
 
         // Load borrows
@@ -189,7 +210,7 @@
             tbody.innerHTML = '<tr><td colspan="7" class="text-center">Đang tải...</td></tr>';
 
             try {
-                const data = await borrowsAPI.getBorrows(currentPage, pageSize, statusFilter);
+                const data = await borrowsAPI.getBorrows(currentPage, pageSize, statusFilter, searchQuery);
                 renderBorrows(data.items);
                 renderPagination(document.getElementById('pagination'), currentPage, data.total_pages, (page) => {
                     currentPage = page;
@@ -210,13 +231,13 @@
 
             tbody.innerHTML = borrows.map(borrow => `
                 <tr>
-                    <td>#${borrow.id}</td>
-                    <td>${borrow.user?.full_name || borrow.user?.username || 'N/A'}</td>
-                    <td>${borrow.items?.length || 0} đầu sách</td>
-                    <td>${formatDateTime(borrow.created_at)}</td>
-                    <td>${borrow.due_date ? formatDate(borrow.due_date) : '-'}</td>
-                    <td>${getStatusBadge(borrow.status)}</td>
-                    <td>
+                    <td class="col-id">#${borrow.id}</td>
+                    <td class="col-name" title="${borrow.user?.full_name || borrow.user?.username || 'N/A'}">${borrow.user?.full_name || borrow.user?.username || 'N/A'}</td>
+                    <td class="col-number">${borrow.items?.length || 0}</td>
+                    <td class="col-date">${formatDateTime(borrow.created_at)}</td>
+                    <td class="col-date">${borrow.due_date ? formatDate(borrow.due_date) : '-'}</td>
+                    <td class="col-status">${getStatusBadge(borrow.status)}</td>
+                    <td class="col-actions">
                         <button class="btn btn-sm btn-primary" onclick="viewBorrow(${borrow.id})">Chi tiết</button>
                     </td>
                 </tr>
@@ -369,6 +390,14 @@
             loadBorrows();
         });
 
+        // Search handler
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', debounce((e) => {
+            searchQuery = e.target.value;
+            currentPage = 1;
+            loadBorrows();
+        }, 300));
+
         // Check URL params for specific borrow
         const urlParams = new URLSearchParams(window.location.search);
         const borrowId = urlParams.get('id');
@@ -378,6 +407,13 @@
 
         // Init
         loadBorrows();
+
+        // Load sidebar user name
+        const user = getCurrentUser();
+        const sidebarUserName = document.getElementById('sidebar-user-name');
+        if (sidebarUserName && user) {
+            sidebarUserName.textContent = user.full_name || user.username || 'Admin';
+        }
     </script>
 </body>
 </html>

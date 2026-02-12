@@ -11,15 +11,28 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <h2>📚 Thư viện PTIT</h2>
+                <h2>Thư viện PTIT</h2>
             </div>
             <ul class="sidebar-nav">
-                <li><a href="dashboard.html"><span>📊</span> <span>Dashboard</span></a></li>
-                <li><a href="books.html"><span>📖</span> <span>Quản lý sách</span></a></li>
-                <li><a href="users.html" class="active"><span>👥</span> <span>Quản lý độc giả</span></a></li>
-                <li><a href="borrows.html"><span>📋</span> <span>Quản lý mượn trả</span></a></li>
-                <li><a href="#" onclick="logout()"><span>🚪</span> <span>Đăng xuất</span></a></li>
+                <li><a href="dashboard.html"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span> <span>Dashboard</span></a></li>
+                <li><a href="books.html"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span> <span>Quản lý sách</span></a></li>
+                <li><a href="users.html" class="active"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span> <span>Quản lý độc giả</span></a></li>
+                <li><a href="borrows.html"><span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span> <span>Quản lý mượn trả</span></a></li>
             </ul>
+            <div class="sidebar-footer">
+                <div class="user-account-box">
+                    <div class="user-avatar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="sidebar-user-name">Đang tải...</div>
+                        <div class="user-role">Quản trị viên</div>
+                    </div>
+                    <button class="btn-logout" onclick="logout()" title="Đăng xuất">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -32,7 +45,7 @@
             <!-- Search -->
             <div class="search-box">
                 <div class="search-input">
-                    <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%);">🔍</span>
+                    <span class="search-icon" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
                     <input type="text" id="search-input" placeholder="Tìm kiếm theo tên, email, username...">
                 </div>
             </div>
@@ -44,14 +57,14 @@
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th class="col-id">ID</th>
                                     <th>Username</th>
-                                    <th>Họ tên</th>
-                                    <th>Email</th>
+                                    <th class="col-name">Họ tên</th>
+                                    <th class="col-email">Email</th>
                                     <th>SĐT</th>
-                                    <th>Trạng thái</th>
-                                    <th>Ngày tạo</th>
-                                    <th>Thao tác</th>
+                                    <th class="col-status">Trạng thái</th>
+                                    <th class="col-date">Ngày tạo</th>
+                                    <th class="col-actions">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody id="users-table-body">
@@ -69,14 +82,16 @@
 
     <!-- User Modal -->
     <div class="modal-overlay" id="user-modal">
-        <div class="modal">
-            <div class="modal-header">
+        <div class="modal modal-scrollable">
+            <div class="modal-header modal-header-fixed">
                 <h3>Chỉnh sửa độc giả</h3>
                 <button class="modal-close" onclick="closeModal('user-modal')">&times;</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body-scroll">
                 <form id="user-form">
                     <input type="hidden" id="user-id">
+
+                    <h4 class="form-section-title">Thông tin tài khoản</h4>
                     <div class="form-group">
                         <label class="form-label">Username</label>
                         <input type="text" class="form-control" id="user-username" disabled>
@@ -98,38 +113,21 @@
                             <input type="checkbox" id="user-active"> Tài khoản đang hoạt động
                         </label>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('user-modal')">Hủy</button>
-                <button class="btn btn-primary" onclick="saveUser()">Lưu</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Reset Password Modal -->
-    <div class="modal-overlay" id="password-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h3>Reset mật khẩu</h3>
-                <button class="modal-close" onclick="closeModal('password-modal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="password-form">
-                    <input type="hidden" id="password-user-id">
+                    <h4 class="form-section-title">Đổi mật khẩu</h4>
+                    <p class="text-muted" style="margin-bottom: 15px; font-size: 13px;">Để trống nếu không muốn đổi mật khẩu</p>
                     <div class="form-group">
                         <label class="form-label">Mật khẩu mới</label>
-                        <input type="password" class="form-control" id="new-password" required minlength="6">
+                        <input type="password" class="form-control" id="user-new-password" placeholder="Nhập mật khẩu mới...">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Xác nhận mật khẩu</label>
-                        <input type="password" class="form-control" id="confirm-password" required>
+                        <input type="password" class="form-control" id="user-confirm-password" placeholder="Nhập lại mật khẩu...">
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('password-modal')">Hủy</button>
-                <button class="btn btn-primary" onclick="resetPassword()">Reset</button>
+            <div class="modal-footer modal-footer-fixed">
+                <button class="btn btn-primary" onclick="saveUser()">Lưu thay đổi</button>
             </div>
         </div>
     </div>
@@ -170,21 +168,22 @@
 
             tbody.innerHTML = users.map(user => `
                 <tr>
-                    <td>${user.id}</td>
-                    <td>${user.username}</td>
-                    <td>${user.full_name || '-'}</td>
-                    <td>${user.email}</td>
+                    <td class="col-id">${user.id}</td>
+                    <td title="${user.username}">${user.username}</td>
+                    <td class="col-name" title="${user.full_name || '-'}">${user.full_name || '-'}</td>
+                    <td class="col-email" title="${user.email}">${user.email}</td>
                     <td>${user.phone || '-'}</td>
-                    <td>
+                    <td class="col-status">
                         <span class="badge ${user.is_active ? 'badge-success' : 'badge-danger'}">
                             ${user.is_active ? 'Hoạt động' : 'Vô hiệu hóa'}
                         </span>
                     </td>
-                    <td>${formatDate(user.created_at)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-warning" onclick="editUser(${user.id})">Sửa</button>
-                        <button class="btn btn-sm btn-info" onclick="openResetPassword(${user.id})">Reset MK</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">Xóa</button>
+                    <td class="col-date">${formatDate(user.created_at)}</td>
+                    <td class="col-actions">
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-warning" onclick="editUser(${user.id})">Sửa</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">Xóa</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -200,15 +199,33 @@
                 document.getElementById('user-fullname').value = user.full_name || '';
                 document.getElementById('user-phone').value = user.phone || '';
                 document.getElementById('user-active').checked = user.is_active;
+                // Clear password fields
+                document.getElementById('user-new-password').value = '';
+                document.getElementById('user-confirm-password').value = '';
                 openModal('user-modal');
             } catch (error) {
                 showAlert(error.message, 'danger');
             }
         }
 
-        // Save user
+        // Save user (including password reset if provided)
         async function saveUser() {
             const userId = document.getElementById('user-id').value;
+            const newPassword = document.getElementById('user-new-password').value;
+            const confirmPassword = document.getElementById('user-confirm-password').value;
+
+            // Check password match if provided
+            if (newPassword || confirmPassword) {
+                if (newPassword !== confirmPassword) {
+                    showAlert('Mật khẩu không khớp!', 'danger');
+                    return;
+                }
+                if (newPassword.length < 6) {
+                    showAlert('Mật khẩu phải có ít nhất 6 ký tự!', 'danger');
+                    return;
+                }
+            }
+
             const userData = {
                 full_name: document.getElementById('user-fullname').value || null,
                 phone: document.getElementById('user-phone').value || null,
@@ -216,38 +233,19 @@
             };
 
             try {
+                // Update user info
                 await usersAPI.updateUser(userId, userData);
-                showAlert('Cập nhật thành công!', 'success');
+
+                // Reset password if provided
+                if (newPassword) {
+                    await usersAPI.resetPassword(userId, newPassword);
+                    showAlert('Cập nhật thông tin và mật khẩu thành công!', 'success');
+                } else {
+                    showAlert('Cập nhật thành công!', 'success');
+                }
+
                 closeModal('user-modal');
                 loadUsers();
-            } catch (error) {
-                showAlert(error.message, 'danger');
-            }
-        }
-
-        // Open reset password modal
-        function openResetPassword(userId) {
-            document.getElementById('password-user-id').value = userId;
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-password').value = '';
-            openModal('password-modal');
-        }
-
-        // Reset password
-        async function resetPassword() {
-            const userId = document.getElementById('password-user-id').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            if (newPassword !== confirmPassword) {
-                showAlert('Mật khẩu không khớp!', 'danger');
-                return;
-            }
-
-            try {
-                await usersAPI.resetPassword(userId, newPassword);
-                showAlert('Reset mật khẩu thành công!', 'success');
-                closeModal('password-modal');
             } catch (error) {
                 showAlert(error.message, 'danger');
             }
@@ -276,6 +274,13 @@
 
         // Init
         loadUsers();
+
+        // Load sidebar user name
+        const user = getCurrentUser();
+        const sidebarUserName = document.getElementById('sidebar-user-name');
+        if (sidebarUserName && user) {
+            sidebarUserName.textContent = user.full_name || user.username || 'Admin';
+        }
     </script>
 </body>
 </html>
