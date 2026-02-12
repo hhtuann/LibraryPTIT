@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ mượn - Thư viện PTIT</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 Thư viện PTIT</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span>📊</span> <span>Dashboard</span></a></li>
+                <li><a href="books.html"><span>📖</span> <span>Danh sách sách</span></a></li>
+                <li><a href="wishlist.html" class="active"><span>🛒</span> <span>Giỏ mượn</span></a></li>
+                <li><a href="borrows.html"><span>📋</span> <span>Phiếu mượn của tôi</span></a></li>
+                <li><a href="#" onclick="logout()"><span>🚪</span> <span>Đăng xuất</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header d-flex justify-between align-center">
+                <div>
+                    <h1>🛒 Giỏ mượn</h1>
+                    <p>Xem lại và tạo phiếu mượn sách</p>
+                </div>
+                <div class="d-flex gap-1">
+                    <a href="books.html" class="btn btn-outline">+ Thêm sách</a>
+                    <button class="btn btn-danger" onclick="clearWishlist()" id="clear-btn" style="display:none;">
+                        🗑️ Xóa tất cả
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wishlist Container -->
+            <div class="card">
+                <div class="card-body" id="wishlist-container">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+            <!-- Create Borrow Section -->
+            <div class="card mt-2" id="create-borrow-section" style="display:none;">
+                <div class="card-header">Tạo phiếu mượn</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Ngày trả sách *:</label>
+                        <input type="date" class="form-control" id="borrow-due-date" required style="max-width: 250px;">
+                        <small class="form-text">Chọn ngày bạn dự kiến trả sách</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi chú (tùy chọn):</label>
+                        <textarea class="form-control" id="borrow-note" rows="3" placeholder="Nhập ghi chú cho thủ thư..."></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-lg" onclick="createBorrowRequest()">
+                        📋 Tạo phiếu mượn
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        // Check auth
+        if (!requireAuth()) {
+            // Will redirect
+        }
+
+        let wishlistItems = [];
+
+        // Load wishlist
+        async function loadWishlist() {
+            const container = document.getElementById('wishlist-container');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const data = await wishlistAPI.getWishlist();
+                wishlistItems = data.items;
+                renderWishlist();
+            } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            }
+        }
+
+        function renderWishlist() {
+            const container = document.getElementById('wishlist-container');
+            const clearBtn = document.getElementById('clear-btn');
+            const createSection = document.getElementById('create-borrow-section');
+
+            if (!wishlistItems || wishlistItems.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 64px; margin-bottom: 20px;">🛒</div>
+                        <h3>Giỏ mượn trống</h3>
+                        <p class="text-muted">Hãy thêm sách vào giỏ để mượn</p>
+                        <a href="books.html" class="btn btn-primary mt-2">📖 Xem danh sách sách</a>
+                    </div>
+                `;
+                clearBtn.style.display = 'none';
+                createSection.style.display = 'none';
+                return;
+            }
+
+            clearBtn.style.display = 'inline-block';
+            createSection.style.display = 'block';
+
+            container.innerHTML = wishlistItems.map(item => `
+                <div class="wishlist-item">
+                    <div class="wishlist-item-image">
+                        ${item.book?.cover_image
+                            ? `<img src="${item.book.cover_image}" alt="${item.book.title}" style="width:100%;height:100%;object-fit:cover;border-radius:5px;">`
+                            : '📖'}
+                    </div>
+                    <div class="wishlist-item-info">
+                        <h4>${item.book?.title || 'N/A'}</h4>
+                        <p>✍️ ${item.book?.author || '-'}</p>
+                        <p class="${item.book?.available_quantity >= item.quantity ? 'text-success' : 'text-danger'}">
+                            Còn ${item.book?.available_quantity || 0} cuốn
+                            ${item.book?.available_quantity < item.quantity ? ' (không đủ!)' : ''}
+                        </p>
+                    </div>
+                    <div class="wishlist-item-quantity">
+                        <button class="quantity-btn" onclick="updateQuantity(${item.book_id}, ${item.quantity - 1})">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="quantity-btn" onclick="updateQuantity(${item.book_id}, ${item.quantity + 1})">+</button>
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="removeItem(${item.book_id})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        // Update quantity
+        async function updateQuantity(bookId, quantity) {
+            if (quantity <= 0) {
+                removeItem(bookId);
+                return;
+            }
+
+            try {
+                await wishlistAPI.updateWishlistItem(bookId, quantity);
+                loadWishlist();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Remove item
+        async function removeItem(bookId) {
+            try {
+                await wishlistAPI.removeFromWishlist(bookId);
+                loadWishlist();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Clear wishlist
+        async function clearWishlist() {
+            if (!confirmAction('Bạn có chắc muốn xóa tất cả sách trong giỏ?')) return;
+
+            try {
+                await wishlistAPI.clearWishlist();
+                showAlert('Đã xóa tất cả!', 'success');
+                loadWishlist();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Create borrow request
+        async function createBorrowRequest() {
+            // Kiểm tra ngày trả
+            const dueDate = document.getElementById('borrow-due-date').value;
+            if (!dueDate) {
+                showAlert('Vui lòng chọn ngày trả sách!', 'danger');
+                return;
+            }
+
+            // Kiểm tra ngày trả phải sau ngày hôm nay
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const selectedDate = new Date(dueDate);
+            if (selectedDate <= today) {
+                showAlert('Ngày trả phải sau ngày hôm nay!', 'danger');
+                return;
+            }
+
+            // Kiểm tra có đủ sách không
+            const insufficientBooks = wishlistItems.filter(item =>
+                item.book?.available_quantity < item.quantity
+            );
+
+            if (insufficientBooks.length > 0) {
+                const bookNames = insufficientBooks.map(i => i.book?.title).join(', ');
+                showAlert(`Các sách sau không đủ số lượng: ${bookNames}. Vui lòng điều chỉnh.`, 'warning');
+                return;
+            }
+
+            const note = document.getElementById('borrow-note').value;
+
+            try {
+                await borrowsAPI.createBorrow(note, null, dueDate);
+                showAlert('Tạo phiếu mượn thành công! Vui lòng đợi thủ thư duyệt.', 'success');
+
+                // Redirect to borrows page
+                setTimeout(() => {
+                    window.location.href = 'borrows.html';
+                }, 1500);
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Init
+        loadWishlist();
+    </script>
+</body>
+</html>
+

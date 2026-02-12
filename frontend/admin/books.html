@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sách - Admin - Thư viện PTIT</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 Thư viện PTIT</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span>📊</span> <span>Dashboard</span></a></li>
+                <li><a href="books.html" class="active"><span>📖</span> <span>Quản lý sách</span></a></li>
+                <li><a href="users.html"><span>👥</span> <span>Quản lý độc giả</span></a></li>
+                <li><a href="borrows.html"><span>📋</span> <span>Quản lý mượn trả</span></a></li>
+                <li><a href="#" onclick="logout()"><span>🚪</span> <span>Đăng xuất</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header d-flex justify-between align-center">
+                <div>
+                    <h1>Quản lý sách</h1>
+                    <p>Thêm, sửa, xóa sách trong thư viện</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('book-modal'); resetBookForm();">
+                    + Thêm sách mới
+                </button>
+            </div>
+
+            <!-- Search & Filter -->
+            <div class="search-box">
+                <div class="search-input">
+                    <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%);">🔍</span>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm theo tên, tác giả, ISBN...">
+                </div>
+                <select class="filter-select" id="category-filter">
+                    <option value="">Tất cả danh mục</option>
+                </select>
+            </div>
+
+            <!-- Books Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Tên sách</th>
+                                    <th>Tác giả</th>
+                                    <th>Danh mục</th>
+                                    <th>Số lượng</th>
+                                    <th>Còn lại</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="books-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center">Đang tải...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Book Modal -->
+    <div class="modal-overlay" id="book-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Thêm sách mới</h3>
+                <button class="modal-close" onclick="closeModal('book-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="book-form">
+                    <input type="hidden" id="book-id">
+                    <div class="form-group">
+                        <label class="form-label">Tên sách *</label>
+                        <input type="text" class="form-control" id="book-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tác giả</label>
+                        <input type="text" class="form-control" id="book-author">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ISBN</label>
+                        <input type="text" class="form-control" id="book-isbn">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Danh mục</label>
+                        <input type="text" class="form-control" id="book-category">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số lượng</label>
+                        <input type="number" class="form-control" id="book-quantity" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="book-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">URL ảnh bìa</label>
+                        <input type="text" class="form-control" id="book-cover">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('book-modal')">Hủy</button>
+                <button class="btn btn-primary" onclick="saveBook()">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        // Check auth
+        if (!requireAdmin()) {
+            // Will redirect
+        }
+
+        let currentPage = 1;
+        const pageSize = 10;
+        let searchQuery = '';
+        let categoryFilter = '';
+
+        // Load books
+        async function loadBooks() {
+            const tbody = document.getElementById('books-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Đang tải...</td></tr>';
+
+            try {
+                const data = await booksAPI.getBooks(currentPage, pageSize, searchQuery, categoryFilter);
+                renderBooks(data.items);
+                renderPagination(document.getElementById('pagination'), currentPage, data.total_pages, (page) => {
+                    currentPage = page;
+                    loadBooks();
+                });
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        function renderBooks(books) {
+            const tbody = document.getElementById('books-table-body');
+
+            if (!books || books.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Không có sách nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = books.map(book => `
+                <tr>
+                    <td>${book.id}</td>
+                    <td><strong>${book.title}</strong></td>
+                    <td>${book.author || '-'}</td>
+                    <td>${book.category || '-'}</td>
+                    <td>${book.quantity}</td>
+                    <td class="${book.available_quantity > 0 ? 'text-success' : 'text-danger'}">
+                        ${book.available_quantity}
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editBook(${book.id})">Sửa</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteBook(${book.id})">Xóa</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load categories
+        async function loadCategories() {
+            try {
+                const categories = await booksAPI.getCategories();
+                const select = document.getElementById('category-filter');
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        // Reset form
+        function resetBookForm() {
+            document.getElementById('book-id').value = '';
+            document.getElementById('book-title').value = '';
+            document.getElementById('book-author').value = '';
+            document.getElementById('book-isbn').value = '';
+            document.getElementById('book-category').value = '';
+            document.getElementById('book-quantity').value = '0';
+            document.getElementById('book-description').value = '';
+            document.getElementById('book-cover').value = '';
+            document.getElementById('modal-title').textContent = 'Thêm sách mới';
+        }
+
+        // Edit book
+        async function editBook(bookId) {
+            try {
+                const book = await booksAPI.getBook(bookId);
+                document.getElementById('book-id').value = book.id;
+                document.getElementById('book-title').value = book.title;
+                document.getElementById('book-author').value = book.author || '';
+                document.getElementById('book-isbn').value = book.isbn || '';
+                document.getElementById('book-category').value = book.category || '';
+                document.getElementById('book-quantity').value = book.quantity;
+                document.getElementById('book-description').value = book.description || '';
+                document.getElementById('book-cover').value = book.cover_image || '';
+                document.getElementById('modal-title').textContent = 'Chỉnh sửa sách';
+                openModal('book-modal');
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Save book
+        async function saveBook() {
+            const bookId = document.getElementById('book-id').value;
+            const bookData = {
+                title: document.getElementById('book-title').value,
+                author: document.getElementById('book-author').value || null,
+                isbn: document.getElementById('book-isbn').value || null,
+                category: document.getElementById('book-category').value || null,
+                quantity: parseInt(document.getElementById('book-quantity').value) || 0,
+                description: document.getElementById('book-description').value || null,
+                cover_image: document.getElementById('book-cover').value || null
+            };
+
+            try {
+                if (bookId) {
+                    await booksAPI.updateBook(bookId, bookData);
+                    showAlert('Cập nhật sách thành công!', 'success');
+                } else {
+                    await booksAPI.createBook(bookData);
+                    showAlert('Thêm sách thành công!', 'success');
+                }
+                closeModal('book-modal');
+                loadBooks();
+                loadCategories();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Delete book
+        async function deleteBook(bookId) {
+            if (!confirmAction('Bạn có chắc muốn xóa sách này?')) return;
+
+            try {
+                await booksAPI.deleteBook(bookId);
+                showAlert('Xóa sách thành công!', 'success');
+                loadBooks();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Search handler
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', debounce((e) => {
+            searchQuery = e.target.value;
+            currentPage = 1;
+            loadBooks();
+        }, 300));
+
+        // Category filter handler
+        document.getElementById('category-filter').addEventListener('change', (e) => {
+            categoryFilter = e.target.value;
+            currentPage = 1;
+            loadBooks();
+        });
+
+        // Init
+        loadBooks();
+        loadCategories();
+    </script>
+</body>
+</html>
+

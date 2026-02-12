@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký - Thư viện PTIT</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>📚 Thư viện PTIT</h1>
+                <p>Tạo tài khoản mới</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label" for="username">Tên đăng nhập *</label>
+                    <input type="text" class="form-control" id="username" name="username" required
+                           placeholder="Nhập tên đăng nhập">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email *</label>
+                    <input type="email" class="form-control" id="email" name="email" required
+                           placeholder="Nhập email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="full_name">Họ và tên</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name"
+                           placeholder="Nhập họ và tên">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">Số điện thoại</label>
+                    <input type="tel" class="form-control" id="phone" name="phone"
+                           placeholder="Nhập số điện thoại">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Mật khẩu *</label>
+                    <input type="password" class="form-control" id="password" name="password" required
+                           placeholder="Nhập mật khẩu" minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password">Xác nhận mật khẩu *</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required
+                           placeholder="Nhập lại mật khẩu">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    Đăng ký
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Đã có tài khoản? <a href="login.html">Đăng nhập</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // Redirect nếu đã đăng nhập
+        redirectIfLoggedIn();
+
+        // Handle register form
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const alertContainer = document.getElementById('alert-container');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            // Validate password match
+            if (password !== confirmPassword) {
+                showAlert('Mật khẩu không khớp', 'danger', alertContainer);
+                return;
+            }
+
+            const userData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: password,
+                full_name: document.getElementById('full_name').value || null,
+                phone: document.getElementById('phone').value || null
+            };
+
+            try {
+                await authAPI.register(userData);
+                showAlert('Đăng ký thành công! Đang chuyển hướng...', 'success', alertContainer);
+
+                // Auto login
+                setTimeout(async () => {
+                    try {
+                        const loginData = await authAPI.login(userData.username, userData.password);
+                        localStorage.setItem('token', loginData.access_token);
+                        const user = await authAPI.getMe();
+                        saveAuth(loginData.access_token, user);
+                        window.location.href = 'user/dashboard.html';
+                    } catch {
+                        window.location.href = 'login.html';
+                    }
+                }, 1500);
+            } catch (error) {
+                showAlert(error.message, 'danger', alertContainer);
+            }
+        });
+    </script>
+</body>
+</html>
+

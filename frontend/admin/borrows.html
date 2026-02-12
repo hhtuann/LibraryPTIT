@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý mượn trả - Admin - Thư viện PTIT</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 Thư viện PTIT</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span>📊</span> <span>Dashboard</span></a></li>
+                <li><a href="books.html"><span>📖</span> <span>Quản lý sách</span></a></li>
+                <li><a href="users.html"><span>👥</span> <span>Quản lý độc giả</span></a></li>
+                <li><a href="borrows.html" class="active"><span>📋</span> <span>Quản lý mượn trả</span></a></li>
+                <li><a href="#" onclick="logout()"><span>🚪</span> <span>Đăng xuất</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>Quản lý mượn trả</h1>
+                <p>Duyệt và quản lý phiếu mượn sách</p>
+            </div>
+
+            <!-- Filter -->
+            <div class="search-box">
+                <select class="filter-select" id="status-filter">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="pending">Chờ duyệt</option>
+                    <option value="approved">Đã duyệt</option>
+                    <option value="need_edit">Cần chỉnh sửa</option>
+                    <option value="rejected">Từ chối</option>
+                    <option value="returned">Đã trả</option>
+                </select>
+            </div>
+
+            <!-- Borrows Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Độc giả</th>
+                                    <th>Số sách</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Hạn trả</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="borrows-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center">Đang tải...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Borrow Modal -->
+    <div class="modal-overlay" id="view-modal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>Chi tiết phiếu mượn #<span id="borrow-id"></span></h3>
+                <button class="modal-close" onclick="closeModal('view-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <strong>Độc giả:</strong> <span id="borrow-user"></span>
+                </div>
+                <div class="mb-2">
+                    <strong>Ngày tạo:</strong> <span id="borrow-created"></span>
+                </div>
+                <div class="mb-2">
+                    <strong>Trạng thái:</strong> <span id="borrow-status"></span>
+                </div>
+                <div class="mb-2" id="borrow-due-container">
+                    <strong>Hạn trả:</strong> <span id="borrow-due"></span>
+                </div>
+                <div class="mb-2" id="borrow-note-container">
+                    <strong>Ghi chú của độc giả:</strong> <span id="borrow-note"></span>
+                </div>
+                <div class="mb-2" id="borrow-admin-note-container">
+                    <strong>Ghi chú của admin:</strong> <span id="borrow-admin-note"></span>
+                </div>
+
+                <h4 class="mt-2 mb-1">Danh sách sách:</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Tên sách</th>
+                            <th>Tác giả</th>
+                            <th>SL mượn</th>
+                            <th>Còn lại</th>
+                        </tr>
+                    </thead>
+                    <tbody id="borrow-items-body"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer" id="borrow-actions"></div>
+        </div>
+    </div>
+
+    <!-- Approve Modal -->
+    <div class="modal-overlay" id="approve-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Duyệt phiếu mượn</h3>
+                <button class="modal-close" onclick="closeModal('approve-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="approve-form">
+                    <input type="hidden" id="approve-borrow-id">
+                    <div class="alert alert-info">
+                        <strong>Ngày trả sách:</strong> <span id="approve-due-date-display"></span>
+                        <br><small>(Do độc giả đã chọn khi tạo phiếu)</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ghi chú (tùy chọn)</label>
+                        <textarea class="form-control" id="approve-note" rows="3" placeholder="Nhập ghi chú cho độc giả..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('approve-modal')">Hủy</button>
+                <button class="btn btn-success" onclick="approveBorrow()">Duyệt</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal-overlay" id="reject-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Từ chối / Yêu cầu chỉnh sửa</h3>
+                <button class="modal-close" onclick="closeModal('reject-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="reject-form">
+                    <input type="hidden" id="reject-borrow-id">
+                    <div class="form-group">
+                        <label class="form-label">Lý do *</label>
+                        <textarea class="form-control" id="reject-note" rows="3" required placeholder="Nhập lý do từ chối hoặc yêu cầu chỉnh sửa..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" id="reject-require-edit"> Yêu cầu độc giả chỉnh sửa (thay vì từ chối hoàn toàn)
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('reject-modal')">Hủy</button>
+                <button class="btn btn-danger" onclick="rejectBorrow()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        // Check auth
+        if (!requireAdmin()) {
+            // Will redirect
+        }
+
+        let currentPage = 1;
+        const pageSize = 10;
+        let statusFilter = '';
+        let currentBorrow = null;
+
+        // Load borrows
+        async function loadBorrows() {
+            const tbody = document.getElementById('borrows-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Đang tải...</td></tr>';
+
+            try {
+                const data = await borrowsAPI.getBorrows(currentPage, pageSize, statusFilter);
+                renderBorrows(data.items);
+                renderPagination(document.getElementById('pagination'), currentPage, data.total_pages, (page) => {
+                    currentPage = page;
+                    loadBorrows();
+                });
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        function renderBorrows(borrows) {
+            const tbody = document.getElementById('borrows-table-body');
+
+            if (!borrows || borrows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">Không có phiếu mượn nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = borrows.map(borrow => `
+                <tr>
+                    <td>#${borrow.id}</td>
+                    <td>${borrow.user?.full_name || borrow.user?.username || 'N/A'}</td>
+                    <td>${borrow.items?.length || 0} đầu sách</td>
+                    <td>${formatDateTime(borrow.created_at)}</td>
+                    <td>${borrow.due_date ? formatDate(borrow.due_date) : '-'}</td>
+                    <td>${getStatusBadge(borrow.status)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="viewBorrow(${borrow.id})">Chi tiết</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // View borrow detail
+        async function viewBorrow(borrowId) {
+            try {
+                currentBorrow = await borrowsAPI.getBorrow(borrowId);
+
+                document.getElementById('borrow-id').textContent = currentBorrow.id;
+                document.getElementById('borrow-user').textContent = currentBorrow.user?.full_name || currentBorrow.user?.username || 'N/A';
+                document.getElementById('borrow-created').textContent = formatDateTime(currentBorrow.created_at);
+                document.getElementById('borrow-status').innerHTML = getStatusBadge(currentBorrow.status);
+
+                // Due date
+                const dueContainer = document.getElementById('borrow-due-container');
+                if (currentBorrow.due_date) {
+                    dueContainer.style.display = 'block';
+                    document.getElementById('borrow-due').textContent = formatDate(currentBorrow.due_date);
+                } else {
+                    dueContainer.style.display = 'none';
+                }
+
+                // Notes
+                const noteContainer = document.getElementById('borrow-note-container');
+                if (currentBorrow.note) {
+                    noteContainer.style.display = 'block';
+                    document.getElementById('borrow-note').textContent = currentBorrow.note;
+                } else {
+                    noteContainer.style.display = 'none';
+                }
+
+                const adminNoteContainer = document.getElementById('borrow-admin-note-container');
+                if (currentBorrow.admin_note) {
+                    adminNoteContainer.style.display = 'block';
+                    document.getElementById('borrow-admin-note').textContent = currentBorrow.admin_note;
+                } else {
+                    adminNoteContainer.style.display = 'none';
+                }
+
+                // Items
+                const itemsBody = document.getElementById('borrow-items-body');
+                itemsBody.innerHTML = currentBorrow.items.map(item => `
+                    <tr>
+                        <td>${item.book?.title || 'N/A'}</td>
+                        <td>${item.book?.author || '-'}</td>
+                        <td>${item.quantity}</td>
+                        <td class="${item.book?.available_quantity >= item.quantity ? 'text-success' : 'text-danger'}">
+                            ${item.book?.available_quantity || 0}
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Actions
+                const actionsDiv = document.getElementById('borrow-actions');
+                let actionsHtml = '<button class="btn btn-secondary" onclick="closeModal(\'view-modal\')">Đóng</button>';
+
+                if (currentBorrow.status === 'pending') {
+                    actionsHtml += `
+                        <button class="btn btn-danger" onclick="openRejectModal()">Từ chối</button>
+                        <button class="btn btn-success" onclick="openApproveModal()">Duyệt</button>
+                    `;
+                } else if (currentBorrow.status === 'approved') {
+                    actionsHtml += `<button class="btn btn-info" onclick="returnBooks()">Xác nhận trả sách</button>`;
+                }
+
+                actionsDiv.innerHTML = actionsHtml;
+
+                openModal('view-modal');
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Open approve modal
+        function openApproveModal() {
+            document.getElementById('approve-borrow-id').value = currentBorrow.id;
+            // Hiển thị ngày trả do user đã chọn
+            document.getElementById('approve-due-date-display').textContent = formatDate(currentBorrow.due_date);
+            document.getElementById('approve-note').value = '';
+            closeModal('view-modal');
+            openModal('approve-modal');
+        }
+
+        // Approve borrow
+        async function approveBorrow() {
+            const borrowId = document.getElementById('approve-borrow-id').value;
+            const note = document.getElementById('approve-note').value;
+
+            try {
+                await borrowsAPI.approveBorrow(borrowId, note);
+                showAlert('Duyệt phiếu mượn thành công!', 'success');
+                closeModal('approve-modal');
+                loadBorrows();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Open reject modal
+        function openRejectModal() {
+            document.getElementById('reject-borrow-id').value = currentBorrow.id;
+            document.getElementById('reject-note').value = '';
+            document.getElementById('reject-require-edit').checked = false;
+            closeModal('view-modal');
+            openModal('reject-modal');
+        }
+
+        // Reject borrow
+        async function rejectBorrow() {
+            const borrowId = document.getElementById('reject-borrow-id').value;
+            const note = document.getElementById('reject-note').value;
+            const requireEdit = document.getElementById('reject-require-edit').checked;
+
+            if (!note.trim()) {
+                showAlert('Vui lòng nhập lý do!', 'danger');
+                return;
+            }
+
+            try {
+                await borrowsAPI.rejectBorrow(borrowId, note, requireEdit);
+                showAlert(requireEdit ? 'Đã yêu cầu độc giả chỉnh sửa!' : 'Đã từ chối phiếu mượn!', 'success');
+                closeModal('reject-modal');
+                loadBorrows();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Return books
+        async function returnBooks() {
+            if (!confirmAction('Xác nhận độc giả đã trả sách?')) return;
+
+            try {
+                await borrowsAPI.returnBooks(currentBorrow.id);
+                showAlert('Xác nhận trả sách thành công!', 'success');
+                closeModal('view-modal');
+                loadBorrows();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Status filter handler
+        document.getElementById('status-filter').addEventListener('change', (e) => {
+            statusFilter = e.target.value;
+            currentPage = 1;
+            loadBorrows();
+        });
+
+        // Check URL params for specific borrow
+        const urlParams = new URLSearchParams(window.location.search);
+        const borrowId = urlParams.get('id');
+        if (borrowId) {
+            viewBorrow(parseInt(borrowId));
+        }
+
+        // Init
+        loadBorrows();
+    </script>
+</body>
+</html>
+

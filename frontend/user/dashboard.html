@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Thư viện PTIT</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 Thư viện PTIT</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html" class="active"><span>📊</span> <span>Dashboard</span></a></li>
+                <li><a href="books.html"><span>📖</span> <span>Danh sách sách</span></a></li>
+                <li><a href="wishlist.html"><span>🛒</span> <span>Giỏ mượn</span></a></li>
+                <li><a href="borrows.html"><span>📋</span> <span>Phiếu mượn của tôi</span></a></li>
+                <li><a href="#" onclick="logout()"><span>🚪</span> <span>Đăng xuất</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>Xin chào, <span id="user-name">Bạn</span>!</h1>
+                <p>Chào mừng đến với Thư viện PTIT</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">🛒</div>
+                    <div class="stat-info">
+                        <h3 id="wishlist-count">0</h3>
+                        <p>Sách trong giỏ</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">⏳</div>
+                    <div class="stat-info">
+                        <h3 id="pending-count">0</h3>
+                        <p>Đang chờ duyệt</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">📚</div>
+                    <div class="stat-info">
+                        <h3 id="borrowing-count">0</h3>
+                        <p>Đang mượn</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon info">✅</div>
+                    <div class="stat-info">
+                        <h3 id="returned-count">0</h3>
+                        <p>Đã trả</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-3">
+                <div class="card-header">Thao tác nhanh</div>
+                <div class="card-body d-flex gap-2">
+                    <a href="books.html" class="btn btn-primary">📖 Xem danh sách sách</a>
+                    <a href="wishlist.html" class="btn btn-warning">🛒 Xem giỏ mượn</a>
+                    <a href="borrows.html" class="btn btn-info">📋 Xem phiếu mượn</a>
+                </div>
+            </div>
+
+            <!-- Recent Borrows -->
+            <div class="card">
+                <div class="card-header d-flex justify-between align-center">
+                    <span>Phiếu mượn gần đây</span>
+                    <a href="borrows.html" class="btn btn-sm btn-outline">Xem tất cả</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Số sách</th>
+                                    <th>Hạn trả</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-borrows-body">
+                                <tr>
+                                    <td colspan="5" class="text-center">Đang tải...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        // Check auth
+        if (!requireAuth()) {
+            // Will redirect
+        }
+
+        // Redirect admin
+        if (isAdmin()) {
+            window.location.href = '../admin/dashboard.html';
+        }
+
+        // Load dashboard
+        async function loadDashboard() {
+            const user = getCurrentUser();
+            document.getElementById('user-name').textContent = user?.full_name || user?.username || 'Bạn';
+
+            try {
+                // Load wishlist count
+                const wishlistData = await wishlistAPI.getWishlist();
+                document.getElementById('wishlist-count').textContent = wishlistData.total_items;
+
+                // Load borrows
+                const borrowsData = await borrowsAPI.getBorrows(1, 100);
+
+                let pending = 0, borrowing = 0, returned = 0;
+                borrowsData.items.forEach(b => {
+                    if (b.status === 'pending' || b.status === 'need_edit') pending++;
+                    else if (b.status === 'approved') borrowing++;
+                    else if (b.status === 'returned') returned++;
+                });
+
+                document.getElementById('pending-count').textContent = pending;
+                document.getElementById('borrowing-count').textContent = borrowing;
+                document.getElementById('returned-count').textContent = returned;
+
+                // Recent borrows
+                renderRecentBorrows(borrowsData.items.slice(0, 5));
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        function renderRecentBorrows(borrows) {
+            const tbody = document.getElementById('recent-borrows-body');
+
+            if (!borrows || borrows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Chưa có phiếu mượn nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = borrows.map(borrow => `
+                <tr>
+                    <td>#${borrow.id}</td>
+                    <td>${formatDateTime(borrow.created_at)}</td>
+                    <td>${borrow.items?.length || 0} đầu sách</td>
+                    <td>${borrow.due_date ? formatDate(borrow.due_date) : '-'}</td>
+                    <td>${getStatusBadge(borrow.status)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Init
+        loadDashboard();
+    </script>
+</body>
+</html>
+

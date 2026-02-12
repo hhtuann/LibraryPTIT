@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý độc giả - Admin - Thư viện PTIT</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>📚 Thư viện PTIT</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="dashboard.html"><span>📊</span> <span>Dashboard</span></a></li>
+                <li><a href="books.html"><span>📖</span> <span>Quản lý sách</span></a></li>
+                <li><a href="users.html" class="active"><span>👥</span> <span>Quản lý độc giả</span></a></li>
+                <li><a href="borrows.html"><span>📋</span> <span>Quản lý mượn trả</span></a></li>
+                <li><a href="#" onclick="logout()"><span>🚪</span> <span>Đăng xuất</span></a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1>Quản lý độc giả</h1>
+                <p>Xem và quản lý thông tin độc giả</p>
+            </div>
+
+            <!-- Search -->
+            <div class="search-box">
+                <div class="search-input">
+                    <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%);">🔍</span>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm theo tên, email, username...">
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Họ tên</th>
+                                    <th>Email</th>
+                                    <th>SĐT</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr>
+                                    <td colspan="8" class="text-center">Đang tải...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="pagination"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- User Modal -->
+    <div class="modal-overlay" id="user-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Chỉnh sửa độc giả</h3>
+                <button class="modal-close" onclick="closeModal('user-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="user-form">
+                    <input type="hidden" id="user-id">
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="user-username" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="user-email" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Họ tên</label>
+                        <input type="text" class="form-control" id="user-fullname">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="text" class="form-control" id="user-phone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" id="user-active"> Tài khoản đang hoạt động
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('user-modal')">Hủy</button>
+                <button class="btn btn-primary" onclick="saveUser()">Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div class="modal-overlay" id="password-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Reset mật khẩu</h3>
+                <button class="modal-close" onclick="closeModal('password-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="password-form">
+                    <input type="hidden" id="password-user-id">
+                    <div class="form-group">
+                        <label class="form-label">Mật khẩu mới</label>
+                        <input type="password" class="form-control" id="new-password" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Xác nhận mật khẩu</label>
+                        <input type="password" class="form-control" id="confirm-password" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('password-modal')">Hủy</button>
+                <button class="btn btn-primary" onclick="resetPassword()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script>
+        // Check auth
+        if (!requireAdmin()) {
+            // Will redirect
+        }
+
+        let currentPage = 1;
+        const pageSize = 10;
+        let searchQuery = '';
+
+        // Load users
+        async function loadUsers() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Đang tải...</td></tr>';
+
+            try {
+                const users = await usersAPI.getUsers(currentPage, pageSize, searchQuery);
+                renderUsers(users);
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
+            }
+        }
+
+        function renderUsers(users) {
+            const tbody = document.getElementById('users-table-body');
+
+            if (!users || users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Không có độc giả nào</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td>${user.full_name || '-'}</td>
+                    <td>${user.email}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>
+                        <span class="badge ${user.is_active ? 'badge-success' : 'badge-danger'}">
+                            ${user.is_active ? 'Hoạt động' : 'Vô hiệu hóa'}
+                        </span>
+                    </td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editUser(${user.id})">Sửa</button>
+                        <button class="btn btn-sm btn-info" onclick="openResetPassword(${user.id})">Reset MK</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">Xóa</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Edit user
+        async function editUser(userId) {
+            try {
+                const user = await usersAPI.getUser(userId);
+                document.getElementById('user-id').value = user.id;
+                document.getElementById('user-username').value = user.username;
+                document.getElementById('user-email').value = user.email;
+                document.getElementById('user-fullname').value = user.full_name || '';
+                document.getElementById('user-phone').value = user.phone || '';
+                document.getElementById('user-active').checked = user.is_active;
+                openModal('user-modal');
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Save user
+        async function saveUser() {
+            const userId = document.getElementById('user-id').value;
+            const userData = {
+                full_name: document.getElementById('user-fullname').value || null,
+                phone: document.getElementById('user-phone').value || null,
+                is_active: document.getElementById('user-active').checked
+            };
+
+            try {
+                await usersAPI.updateUser(userId, userData);
+                showAlert('Cập nhật thành công!', 'success');
+                closeModal('user-modal');
+                loadUsers();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Open reset password modal
+        function openResetPassword(userId) {
+            document.getElementById('password-user-id').value = userId;
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+            openModal('password-modal');
+        }
+
+        // Reset password
+        async function resetPassword() {
+            const userId = document.getElementById('password-user-id').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            if (newPassword !== confirmPassword) {
+                showAlert('Mật khẩu không khớp!', 'danger');
+                return;
+            }
+
+            try {
+                await usersAPI.resetPassword(userId, newPassword);
+                showAlert('Reset mật khẩu thành công!', 'success');
+                closeModal('password-modal');
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Delete user
+        async function deleteUser(userId) {
+            if (!confirmAction('Bạn có chắc muốn xóa độc giả này?')) return;
+
+            try {
+                await usersAPI.deleteUser(userId);
+                showAlert('Xóa độc giả thành công!', 'success');
+                loadUsers();
+            } catch (error) {
+                showAlert(error.message, 'danger');
+            }
+        }
+
+        // Search handler
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', debounce((e) => {
+            searchQuery = e.target.value;
+            currentPage = 1;
+            loadUsers();
+        }, 300));
+
+        // Init
+        loadUsers();
+    </script>
+</body>
+</html>
+
